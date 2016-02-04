@@ -75,7 +75,7 @@ public class MainActivityFragment extends Fragment implements GoogleApiClient.Co
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
                 .build();
-        //mGoogleApiClient.connect();
+       // mGoogleApiClient.connect();
     }
 
     @Override
@@ -96,6 +96,8 @@ public class MainActivityFragment extends Fragment implements GoogleApiClient.Co
 
 
 
+
+/*
 
                 if(mGoogleApiClient.isConnected()) {
                     new Thread(new Runnable() {
@@ -118,6 +120,7 @@ public class MainActivityFragment extends Fragment implements GoogleApiClient.Co
                 } else {
                     Log.v(LOG_TAG, "not connected");
                 }
+*/
 
             }
         });
@@ -147,7 +150,31 @@ public class MainActivityFragment extends Fragment implements GoogleApiClient.Co
 
     @Override
     public void onConnected(Bundle bundle) {
-        Log.d("test", "onConnected");
+        Log.d(LOG_TAG, "onConnected");
+
+        if(mGoogleApiClient.isConnected()) {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    NodeApi.GetConnectedNodesResult nodes = Wearable.NodeApi.getConnectedNodes(mGoogleApiClient).await();
+                    for(Node node : nodes.getNodes()) {
+                        MessageApi.SendMessageResult result = Wearable.MessageApi.sendMessage(mGoogleApiClient, node.getId(),
+                                "/startactivity", "Hello World".getBytes()).await();
+                        if(!result.getStatus().isSuccess()){
+                            Log.v(LOG_TAG, "error");
+
+                        } else {
+                            Log.v(LOG_TAG, "success!! sent to: " + node.getDisplayName());
+                        }
+                    }
+                }
+            }).start();
+
+        } else {
+            Log.v(LOG_TAG, "not connected");
+        }
+
+
     }
 
     @Override
